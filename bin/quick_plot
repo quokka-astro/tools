@@ -35,7 +35,7 @@ def plot_one(pltdir, outdir, field, kind, width, zlim, particle=[], grids=False,
         mean_molecular_weight_per_H_atom = m_u / CLOUDY_H_MASS_FRACTION
 
     # add derived fields
-    if field == ("gas", "n_H"):
+    if field == ("gas", "number_density"):
         # be sure to use a name that does not conflict with existing fields. Do not use ("gas", "number_density")!!!
         ds.add_field(field, function=lambda field, data: data[("gas", "density")] / mean_molecular_weight_per_H_atom, units="cm**-3", sampling_type="cell")
     elif field == ("gas", "temperature"):
@@ -227,7 +227,7 @@ def plot_slice_or_projection(pltdirs, outdir, field, kind, width, zlim, particle
     if field is None or field in ["density", "rho", "den"]:
         field = ("gas", "density")
     elif field in ["n", "nH", "n_H", "num_density"]:
-        field = ("gas", "n_H")
+        field = ("gas", "number_density")
     elif field in ["temperature", "T", "temp"]:
         field = ("gas", "temperature")
     elif field in ['vx', 'velocity-x', 'velocity_x']:
