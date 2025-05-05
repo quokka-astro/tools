@@ -289,7 +289,7 @@ def plot_slice_or_projection(pltdirs, outdir, field, kind, width, zlim, particle
 def parse_args():
     parser = argparse.ArgumentParser()
     # plotfile directories, require at least one
-    parser.add_argument("pltdirs", type=str, nargs="+", help="Plotfile directories, require at least one")
+    parser.add_argument("pltdirs", type=str, nargs="+", help="Plotfile directories, require at least one. Use wildcards like plt00* to select multiple directories. Files with .old. in the name will be ignored.")
     # task
     parser.add_argument("--task", type=str, default="slc", help="Task to perform: slc or proj. Default: slc")
     # pick field to plot
