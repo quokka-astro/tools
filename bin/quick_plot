@@ -18,7 +18,7 @@ CLOUDY_H_MASS_FRACTION = 1.0 / (1.0 + 0.1 * 3.971)
 m_u = 1.660539e-24 * unyt.g
 
 
-def plot_one(pltdir, outdir, field, kind, width, zlim, particle=[], grids=False, cell_edges=False, time_off=False, view_dir="z", center=None, top_left_text=None, use_ISM_mean_molecular_weight=False, figsize=6, cmap='default'):
+def plot_one(pltdir, outdir, field, kind, width, zlim, particle=[], grids=False, cell_edges=False, time_off=False, view_dir="z", center=None, top_left_text=None, use_ISM_mean_molecular_weight=False, figsize=6, cmap='default', p_size=160., p_marker='.'):
 
     print(f"processing {pltdir}")
 
@@ -115,7 +115,7 @@ def plot_one(pltdir, outdir, field, kind, width, zlim, particle=[], grids=False,
                 if len(pos) > 0:
                     # slc.annotate_particles(Lx, p_size=160., col=colors[i], marker='*', ptype=par)
                     # annotate particles at a depth of 0.1 * boxsize
-                    slc.annotate_particles(Lx * 0.1, p_size=160., col=colors[i], marker='*', ptype=par)
+                    slc.annotate_particles(Lx * 0.1, p_size=p_size, col=colors[i], marker=p_marker, ptype=par)
                 else:
                     print("no particles to annotate in ", pltdir)
                     print("pos =", pos)
@@ -205,7 +205,7 @@ def test_filter_snapshots_by_time_interval():
     print(filtered_times)
 
 
-def plot_slice_or_projection(pltdirs, outdir, field, kind, width, zlim, particle=[], grids=False, cell_edges=False, time_off=False, skip_existing=False, view_dir="z", center=None, n_processes=1, print_field_list=False, first_only=False, top_left_text=None, use_ISM_mean_molecular_weight=False, time_interval=None, figsize=6, cmap='default'):
+def plot_slice_or_projection(pltdirs, outdir, field, kind, width, zlim, particle=[], grids=False, cell_edges=False, time_off=False, skip_existing=False, view_dir="z", center=None, n_processes=1, print_field_list=False, first_only=False, top_left_text=None, use_ISM_mean_molecular_weight=False, time_interval=None, figsize=6, cmap='default', p_size=160., p_marker='.'):
 
     if print_field_list:
         ds = yt.load(pltdirs[0])
@@ -270,11 +270,11 @@ def plot_slice_or_projection(pltdirs, outdir, field, kind, width, zlim, particle
         if first_only:
             valid_pltdirs = [valid_pltdirs[0]]
         for pltdir in valid_pltdirs:
-            plot_one(pltdir, outdir, field, kind, width, zlim, particle, grids, cell_edges, time_off, view_dir, center, top_left_text, use_ISM_mean_molecular_weight, figsize, cmap)
+            plot_one(pltdir, outdir, field, kind, width, zlim, particle, grids, cell_edges, time_off, view_dir, center, top_left_text, use_ISM_mean_molecular_weight, figsize, cmap, p_size, p_marker)
     else:
         # Create arguments for parallel processing
         plot_args = [
-            (pltdir, outdir, field, kind, width, zlim, particle, grids, cell_edges, time_off, view_dir, center, top_left_text, use_ISM_mean_molecular_weight, figsize, cmap)
+            (pltdir, outdir, field, kind, width, zlim, particle, grids, cell_edges, time_off, view_dir, center, top_left_text, use_ISM_mean_molecular_weight, figsize, cmap, p_size, p_marker)
             for pltdir in valid_pltdirs
         ]
 
@@ -331,13 +331,17 @@ def parse_args():
     parser.add_argument("--figsize", type=float, default=6, help="Figure size in inches. Default: 6")
     # cmap
     parser.add_argument("--cmap", type=str, default="default", help="Colormap to use, e.g. 'viridis', 'hot', 'jet'. Default: hot for temperature, viridis for everything else")
+    # particle size
+    parser.add_argument("--p_size", type=float, default=160., help="Size of particles in the plot. Default: 160.0")
+    # particle marker
+    parser.add_argument("--p_marker", type=str, default='.', help="Marker style for particles. Common options: '.', '*', 'o', '+', 'x'. Default: '.'")
 
     return parser.parse_args()
 
 
 def main(args):
 
-    plot_slice_or_projection(args.pltdirs, args.outdir, args.field, args.kind, args.width, args.zlim, args.particles, args.grids, args.cell_edges, args.timeoff, args.skip_existing, args.dir, args.center, args.n_processes, args.print_field_list, args.first_only, args.top_left_text, args.use_ISM, args.time_interval, args.figsize, args.cmap)
+    plot_slice_or_projection(args.pltdirs, args.outdir, args.field, args.kind, args.width, args.zlim, args.particles, args.grids, args.cell_edges, args.timeoff, args.skip_existing, args.dir, args.center, args.n_processes, args.print_field_list, args.first_only, args.top_left_text, args.use_ISM, args.time_interval, args.figsize, args.cmap, args.p_size, args.p_marker)
 
 
 if __name__ == "__main__":
