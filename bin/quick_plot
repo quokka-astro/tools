@@ -59,6 +59,9 @@ def plot_one(pltdir, outdir, field, kind, width, zlim, particle=[], grids=False,
         slc = yt.ProjectionPlot(ds, view_dir, field, weight_field=field_rho, center=center)
     else:
         raise ValueError(f"kind {kind} not supported")
+    
+    # get output filename
+    # fig_name = slc.
 
     if cmap == "default":
         cmap = "viridis"
@@ -111,7 +114,11 @@ def plot_one(pltdir, outdir, field, kind, width, zlim, particle=[], grids=False,
                     continue
 
                 # get particle position
-                pos = ad[(par, "particle_position_x")]
+                try:
+                    pos = ad[(par, "particle_position_x")]
+                except yt.utilities.exceptions.YTFieldNotFound:
+                    print(f"no {par} particles to annotate in {pltdir}")
+                    continue
                 if len(pos) > 0:
                     # slc.annotate_particles(Lx, p_size=160., col=colors[i], marker='*', ptype=par)
                     # annotate particles at a depth of 0.1 * boxsize
@@ -241,7 +248,7 @@ def plot_slice_or_projection(pltdirs, outdir, field, kind, width, zlim, particle
     elif field in ['p', 'momentum']:
         field = ("gas", "momentum_density")
     else:
-        raise ValueError(f"field {field} not supported")
+        field = ("boxlib", field)
 
     # Filter out invalid directories and old directories
     valid_pltdirs = [
