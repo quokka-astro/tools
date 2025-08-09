@@ -322,7 +322,7 @@ def test_filter_snapshots_by_time_interval():
     print(filtered_times)
 
 
-def plot_slice_or_projection(pltdirs, outdir, field, kind, width, zlim, particle=[], grids=False, cell_edges=False, time_off=False, skip_existing=False, view_dir="z", center=None, n_processes=1, print_field_list=False, first_only=False, top_left_text=None, time_interval=None, figsize=6, cmap='default', p_size=160., p_marker='.', p_color=None, annotate_center=None, axis_unit=None):
+def plot_slice_or_projection(pltdirs, outdir, field, kind, width, zlim, particle=[], grids=False, cell_edges=False, time_off=False, skip_existing=False, view_dir="z", center=None, n_processes=1, print_field_list=False, first_only=False, top_left_text=None, time_interval=None, mean_molecular_weight=1.0, figsize=6, cmap='default', p_size=160., p_marker='.', p_color=None, annotate_center=None, axis_unit=None):
 
     if print_field_list:
         ds = yt.load(pltdirs[0])
@@ -384,11 +384,11 @@ def plot_slice_or_projection(pltdirs, outdir, field, kind, width, zlim, particle
         if first_only:
             valid_pltdirs = [valid_pltdirs[0]]
         for pltdir in valid_pltdirs:
-            plot_one(pltdir, outdir, field, kind, width, zlim, particle, grids, cell_edges, time_off, view_dir, center, top_left_text, figsize, cmap, p_size, p_marker, p_color, annotate_center, axis_unit)
+            plot_one(pltdir, outdir, field, kind, width, zlim, particle, grids, cell_edges, time_off, view_dir, center, top_left_text, mean_molecular_weight, figsize, cmap, p_size, p_marker, p_color, skip_existing, annotate_center, axis_unit)
     else:
         # Create arguments for parallel processing
         plot_args = [
-            (pltdir, outdir, field, kind, width, zlim, particle, grids, cell_edges, time_off, view_dir, center, top_left_text, figsize, cmap, p_size, p_marker, p_color, annotate_center, axis_unit)
+            (pltdir, outdir, field, kind, width, zlim, particle, grids, cell_edges, time_off, view_dir, center, top_left_text, mean_molecular_weight, figsize, cmap, p_size, p_marker, p_color, skip_existing, annotate_center, axis_unit)
             for pltdir in valid_pltdirs
         ]
 
@@ -487,7 +487,7 @@ def parse_args():
 
 def main(args):
 
-    plot_slice_or_projection(args.pltdirs, args.outdir, args.field, args.kind, args.width, args.zlim, args.particles, args.grids, args.cell_edges, args.timeoff, args.skip_existing, args.dir, args.center, args.n_processes, args.print_field_list, args.first_only, args.top_left_text, args.time_interval, args.figsize, args.cmap, args.p_size, args.p_marker, args.p_color, args.annotate_center, args.axis_unit)
+    plot_slice_or_projection(args.pltdirs, args.outdir, args.field, args.kind, args.width, args.zlim, args.particles, args.grids, args.cell_edges, args.timeoff, args.skip_existing, args.dir, args.center, args.n_processes, args.print_field_list, args.first_only, args.top_left_text, args.time_interval, args.mean_molecular_weight, args.figsize, args.cmap, args.p_size, args.p_marker, args.p_color, args.annotate_center, args.axis_unit)
 
 
 if __name__ == "__main__":
