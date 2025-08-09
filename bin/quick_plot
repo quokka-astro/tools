@@ -18,7 +18,7 @@ CLOUDY_H_MASS_FRACTION = 1.0 / (1.0 + 0.1 * 3.971)
 m_u = 1.660539e-24 * unyt.g
 
 
-def plot_one(pltdir, outdir, field, kind, width, zlim, particle=[], grids=False, cell_edges=False, time_off=False, view_dir="z", center=None, top_left_text=None, use_ISM_mean_molecular_weight=False, figsize=6, cmap='default', p_size=160., p_marker='.', p_color=None):
+def plot_one(pltdir, outdir, field, kind, width, zlim, particle=[], grids=False, cell_edges=False, time_off=False, view_dir="z", center=None, top_left_text=None, use_ISM_mean_molecular_weight=False, figsize=6, cmap='default', p_size=160., p_marker='.', p_color=None, annotate_center=None):
 
     print(f"processing {pltdir}")
 
@@ -140,6 +140,9 @@ def plot_one(pltdir, outdir, field, kind, width, zlim, particle=[], grids=False,
     if top_left_text is not None:
         # Add text annotation at the top-left corner with LaTeX support
         slc.annotate_text((0.02, 0.98), top_left_text, coord_system='axis', text_args={'color': 'white', 'usetex': True, 'verticalalignment': 'top', 'horizontalalignment': 'left'})
+    if annotate_center is not None:
+        # Add text annotation at the center of the domain
+        slc.annotate_text((0.5, 0.5), annotate_center, coord_system='axis', text_args={'color': 'red', 'usetex': True, 'verticalalignment': 'center', 'horizontalalignment': 'center'})
     # get cwd
     cwd = os.getcwd()
     # change to outdir
@@ -213,7 +216,7 @@ def test_filter_snapshots_by_time_interval():
     print(filtered_times)
 
 
-def plot_slice_or_projection(pltdirs, outdir, field, kind, width, zlim, particle=[], grids=False, cell_edges=False, time_off=False, skip_existing=False, view_dir="z", center=None, n_processes=1, print_field_list=False, first_only=False, top_left_text=None, use_ISM_mean_molecular_weight=False, time_interval=None, figsize=6, cmap='default', p_size=160., p_marker='.', p_color=None):
+def plot_slice_or_projection(pltdirs, outdir, field, kind, width, zlim, particle=[], grids=False, cell_edges=False, time_off=False, skip_existing=False, view_dir="z", center=None, n_processes=1, print_field_list=False, first_only=False, top_left_text=None, use_ISM_mean_molecular_weight=False, time_interval=None, figsize=6, cmap='default', p_size=160., p_marker='.', p_color=None, annotate_center=None):
 
     if print_field_list:
         ds = yt.load(pltdirs[0])
@@ -278,11 +281,11 @@ def plot_slice_or_projection(pltdirs, outdir, field, kind, width, zlim, particle
         if first_only:
             valid_pltdirs = [valid_pltdirs[0]]
         for pltdir in valid_pltdirs:
-            plot_one(pltdir, outdir, field, kind, width, zlim, particle, grids, cell_edges, time_off, view_dir, center, top_left_text, use_ISM_mean_molecular_weight, figsize, cmap, p_size, p_marker, p_color)
+            plot_one(pltdir, outdir, field, kind, width, zlim, particle, grids, cell_edges, time_off, view_dir, center, top_left_text, use_ISM_mean_molecular_weight, figsize, cmap, p_size, p_marker, p_color, annotate_center)
     else:
         # Create arguments for parallel processing
         plot_args = [
-            (pltdir, outdir, field, kind, width, zlim, particle, grids, cell_edges, time_off, view_dir, center, top_left_text, use_ISM_mean_molecular_weight, figsize, cmap, p_size, p_marker, p_color)
+            (pltdir, outdir, field, kind, width, zlim, particle, grids, cell_edges, time_off, view_dir, center, top_left_text, use_ISM_mean_molecular_weight, figsize, cmap, p_size, p_marker, p_color, annotate_center)
             for pltdir in valid_pltdirs
         ]
 
@@ -345,13 +348,15 @@ def parse_args():
     parser.add_argument("--p_marker", type=str, default='.', help="Marker style for particles. Common options: '.', '*', 'o', '+', 'x'. Default: '.'")
     # particle color
     parser.add_argument("--p_color", type=str, default=None, help="Color for particles. Default: None (use default colors)")
+    # annotate center
+    parser.add_argument("--annotate_center", type=str, default=None, help="Text to annotate at the center of the domain")
 
     return parser.parse_args()
 
 
 def main(args):
 
-    plot_slice_or_projection(args.pltdirs, args.outdir, args.field, args.kind, args.width, args.zlim, args.particles, args.grids, args.cell_edges, args.timeoff, args.skip_existing, args.dir, args.center, args.n_processes, args.print_field_list, args.first_only, args.top_left_text, args.use_ISM, args.time_interval, args.figsize, args.cmap, args.p_size, args.p_marker, args.p_color)
+    plot_slice_or_projection(args.pltdirs, args.outdir, args.field, args.kind, args.width, args.zlim, args.particles, args.grids, args.cell_edges, args.timeoff, args.skip_existing, args.dir, args.center, args.n_processes, args.print_field_list, args.first_only, args.top_left_text, args.use_ISM, args.time_interval, args.figsize, args.cmap, args.p_size, args.p_marker, args.p_color, args.annotate_center)
 
 
 if __name__ == "__main__":
