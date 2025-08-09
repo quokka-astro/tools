@@ -57,11 +57,18 @@ A comprehensive example:
 
 KEY FUNCTIONS:
 ==============
-- plot_one(): Creates a single plot for one snapshot directory
+- plot_one(pltdir, args): Creates a single plot for one snapshot directory, takes args namespace directly
 - filter_snapshots_by_time_interval(): Filters snapshots to create evenly spaced time sequences
-- plot_slice_or_projection(): Main orchestration function for batch processing
+- plot_slice_or_projection(args): Main orchestration function for batch processing, takes args namespace directly
 - parse_args(): Command-line argument parsing with extensive options
-- main(): Entry point that coordinates the plotting workflow
+- main(args): Entry point that coordinates the plotting workflow
+
+DESIGN NOTES:
+=============
+- Functions now accept the argparse namespace directly instead of many individual parameters
+- This eliminates parameter passing errors and makes the code much more maintainable
+- New parameters can be added to the CLI without changing function signatures
+- The args object is modified in-place for field mapping and center parsing
 
 TECHNICAL DETAILS:
 ==================
@@ -104,8 +111,7 @@ yt.set_log_level(40)
 m_u = 1.660539e-24 * unyt.g
 
 
-def plot_one(pltdir, outdir, field, kind, width, zlim, particle=[], grids=False, cell_edges=False, time_off=False, view_dir="z", center=None, top_left_text=None, mean_molecular_weight=1.0, figsize=6, cmap='default', p_size=160., p_marker='.', p_color=None, skip_existing=False,
-             annotate_center=None, axis_unit=None):
+def plot_one(pltdir, args):
 
     print(f"processing {pltdir}")
 
@@ -116,6 +122,29 @@ def plot_one(pltdir, outdir, field, kind, width, zlim, particle=[], grids=False,
     ad = ds.all_data()
     # print(ds.derived_field_list)
     # return
+
+    # Extract parameters from args
+    field = args.field
+    kind = args.kind
+    width = args.width
+    zlim = args.zlim
+    particle = args.particles
+    grids = args.grids
+    cell_edges = args.cell_edges
+    time_off = args.timeoff
+    view_dir = args.dir
+    center = args.center
+    top_left_text = args.top_left_text
+    mean_molecular_weight = args.mean_molecular_weight
+    figsize = args.figsize
+    cmap = args.cmap
+    p_size = args.p_size
+    p_marker = args.p_marker
+    p_color = args.p_color
+    skip_existing = args.skip_existing
+    annotate_center = args.annotate_center
+    axis_unit = args.axis_unit
+    outdir = args.outdir
 
     mean_molecular_weight_per_H_atom = mean_molecular_weight * m_u
 
@@ -322,81 +351,79 @@ def test_filter_snapshots_by_time_interval():
     print(filtered_times)
 
 
-def plot_slice_or_projection(pltdirs, outdir, field, kind, width, zlim, particle=[], grids=False, cell_edges=False, time_off=False, skip_existing=False, view_dir="z", center=None, n_processes=1, print_field_list=False, first_only=False, top_left_text=None, time_interval=None, mean_molecular_weight=1.0, figsize=6, cmap='default', p_size=160., p_marker='.', p_color=None, annotate_center=None, axis_unit=None):
+def plot_slice_or_projection(args):
 
-    if print_field_list:
-        ds = yt.load(pltdirs[0])
+    if args.print_field_list:
+        ds = yt.load(args.pltdirs[0])
         print("ds.derived_field_list:")
         pprint.pprint(ds.derived_field_list)
         return
 
-    assert view_dir in ["x", "y", "z"]
+    assert args.dir in ["x", "y", "z"]
 
-    if outdir != ".":
-        os.makedirs(outdir, exist_ok=True)
+    if args.outdir != ".":
+        os.makedirs(args.outdir, exist_ok=True)
 
-    if field is None or field in ["density", "rho", "den"]:
-        field = ("gas", "density")
-    elif field in ["n", "nH", "n_H", "num_density"]:
-        field = ("gas", "number_density")
-    elif field in ["temperature", "T", "temp"]:
-        field = ("gas", "temperature")
-    elif field in ['vx', 'velocity-x', 'velocity_x']:
-        field = ("gas", "velocity_x")
-    elif field in ['vy', 'velocity-y', 'velocity_y']:
-        field = ("gas", "velocity_y")
-    elif field in ['vz', 'velocity-z', 'velocity_z']:
-        field = ("gas", "velocity_z")
-    elif field in ['v', 'velocity']:
-        field = ("gas", "velocity")
-    elif field in ['p', 'momentum']:
-        field = ("gas", "momentum_density")
+    # Map field names to yt field tuples
+    if args.field is None or args.field in ["density", "rho", "den"]:
+        args.field = ("gas", "density")
+    elif args.field in ["n", "nH", "n_H", "num_density"]:
+        args.field = ("gas", "number_density")
+    elif args.field in ["temperature", "T", "temp"]:
+        args.field = ("gas", "temperature")
+    elif args.field in ['vx', 'velocity-x', 'velocity_x']:
+        args.field = ("gas", "velocity_x")
+    elif args.field in ['vy', 'velocity-y', 'velocity_y']:
+        args.field = ("gas", "velocity_y")
+    elif args.field in ['vz', 'velocity-z', 'velocity_z']:
+        args.field = ("gas", "velocity_z")
+    elif args.field in ['v', 'velocity']:
+        args.field = ("gas", "velocity")
+    elif args.field in ['p', 'momentum']:
+        args.field = ("gas", "momentum_density")
     else:
-        field = ("boxlib", field)
+        args.field = ("boxlib", args.field)
 
     # Filter out invalid directories and old directories
     valid_pltdirs = [
-        pltdir for pltdir in pltdirs if os.path.isdir(pltdir) and ".old." not in os.path.basename(pltdir)
+        pltdir for pltdir in args.pltdirs if os.path.isdir(pltdir) and ".old." not in os.path.basename(pltdir)
     ]
 
     # Filter snapshots by time interval if specified
-    if time_interval is not None:
-        print(f"Filtering snapshots by time interval of {time_interval} ...")
+    if args.time_interval is not None:
+        print(f"Filtering snapshots by time interval of {args.time_interval} ...")
         valid_pltdirs, filtered_times, time_unit = filter_snapshots_by_time_interval(
-            valid_pltdirs, time_interval)
+            valid_pltdirs, args.time_interval)
         print(f"Filtered times: {filtered_times} {time_unit}")
         print(
-            f"Selected {len(valid_pltdirs)} snapshots based on time interval of {time_interval}")
+            f"Selected {len(valid_pltdirs)} snapshots based on time interval of {args.time_interval}")
     print(f"Valid pltdirs: {valid_pltdirs}")
 
     # parse center
-    if center is not None:
-        if ',' in center:
-            center = tuple(float(x) for x in center.split(','))
-        elif '_' in center:
-            center = tuple(float(x) for x in center.split('_'))
+    if args.center is not None:
+        if ',' in args.center:
+            args.center = tuple(float(x) for x in args.center.split(','))
+        elif '_' in args.center:
+            args.center = tuple(float(x) for x in args.center.split('_'))
         else:
-            center = float(center)
+            args.center = float(args.center)
     else:
-        center = 'c'
+        args.center = 'c'
 
-    if n_processes == 1 or first_only:
-        if first_only:
+    if args.n_processes == 1 or args.first_only:
+        if args.first_only:
             valid_pltdirs = [valid_pltdirs[0]]
         for pltdir in valid_pltdirs:
-            plot_one(pltdir, outdir, field, kind, width, zlim, particle, grids, cell_edges, time_off, view_dir, center, top_left_text, mean_molecular_weight, figsize, cmap, p_size, p_marker, p_color, skip_existing, annotate_center, axis_unit)
+            plot_one(pltdir, args)
     else:
         # Create arguments for parallel processing
-        plot_args = [
-            (pltdir, outdir, field, kind, width, zlim, particle, grids, cell_edges, time_off, view_dir, center, top_left_text, mean_molecular_weight, figsize, cmap, p_size, p_marker, p_color, skip_existing, annotate_center, axis_unit)
-            for pltdir in valid_pltdirs
-        ]
+        plot_args = [(pltdir, args) for pltdir in valid_pltdirs]
 
         print(
-            f"Processing {len(valid_pltdirs)} directories using {n_processes} processes")
+            f"Processing {len(valid_pltdirs)} directories using {args.n_processes} processes")
 
         # Process directories in parallel
-        with Pool(processes=n_processes) as pool:
+        with Pool(processes=args.n_processes) as pool:
             pool.starmap(plot_one, plot_args)
 
 
@@ -486,8 +513,7 @@ def parse_args():
 
 
 def main(args):
-
-    plot_slice_or_projection(args.pltdirs, args.outdir, args.field, args.kind, args.width, args.zlim, args.particles, args.grids, args.cell_edges, args.timeoff, args.skip_existing, args.dir, args.center, args.n_processes, args.print_field_list, args.first_only, args.top_left_text, args.time_interval, args.mean_molecular_weight, args.figsize, args.cmap, args.p_size, args.p_marker, args.p_color, args.annotate_center, args.axis_unit)
+    plot_slice_or_projection(args)
 
 
 if __name__ == "__main__":
